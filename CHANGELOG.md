@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- `apply <profile>` accepts `--only a,b,c` and `--skip x,y` filters so you
+  can re-run a subset of a profile against a server that's already
+  partially configured. `--only` validates each name against the profile
+  and fails loudly on a typo (previously a typo would have silently
+  skipped everything). `--skip` is more lenient — unknown names warn
+  but don't abort. The two flags are mutually exclusive.
+- End-of-run summary now reports how many modules ran vs. skipped.
+
 ## [0.1.1] — minor feature release
 
 ### Added

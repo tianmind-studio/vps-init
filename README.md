@@ -44,6 +44,12 @@ sudo vps-init --dry-run apply web-cn
 # 3. 真正执行（web-cn 适合跑 nginx 网站的场景）
 sudo vps-init apply web-cn
 
+# 如果只想跑其中一部分（例如机器已经有 swap 和时区，只要防火墙+SSH）：
+sudo vps-init apply web-cn --only firewall,fail2ban,ssh-hardening
+
+# 或者跑全部但跳过 SSH 加固（当前还没放好 authorized_keys）：
+sudo vps-init apply web-cn --skip ssh-hardening
+
 # 完事。此时这台机器上：
 # - 时区 Asia/Shanghai
 # - apt 源切到阿里云
@@ -131,7 +137,7 @@ vps-init doctor                    # 看一眼当前机器状态
 ## Roadmap
 
 - [x] `user` 模块：创建非 root 用户 + 免密 sudo + 导入 key（0.1.1）
-- [ ] `apply` 增加 `--skip` / `--only` 开关，可绕过或只跑某几个模块
+- [x] `apply` 增加 `--skip` / `--only` 开关，可绕过或只跑某几个模块（0.1.2）
 - [ ] `postgres` / `mysql` 模块（阿里云源 + 合理默认）
 - [ ] `--profile-dir` 查找顺序优先级更细致的文档
 - [ ] GitHub Actions 跑 `shellcheck` 基础上加上 `bats` 单测（lxc 容器里跑各模块）

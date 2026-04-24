@@ -30,7 +30,9 @@ usage() {
 vps-init — Ubuntu / Debian VPS bootstrap with China-region defaults.
 
 Commands:
-  apply <profile>              Run a profile end-to-end.
+  apply <profile> [flags]      Run a profile end-to-end.
+                                 --only a,b,c   run only these modules
+                                 --skip x,y     run all except these
   mirror [aliyun|tuna|ustc]    Switch apt sources to a China mirror.
   base                         Install base tools (nginx, git, jq, htop, ...).
   swap <size>                  Add a swap file (e.g. 2G, 4G).

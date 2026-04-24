@@ -39,9 +39,28 @@ _vi_resolve_profile() {
 }
 
 vi_cmd_apply() {
-  local profile="${1:-}"
+  local profile=""
+  local only_csv=""
+  local skip_csv=""
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --only)   only_csv="${2:?--only requires a comma-separated module list}"; shift 2 ;;
+      --only=*) only_csv="${1#--only=}"; shift ;;
+      --skip)   skip_csv="${2:?--skip requires a comma-separated module list}"; shift 2 ;;
+      --skip=*) skip_csv="${1#--skip=}"; shift ;;
+      -*)       vi_err "unknown apply flag: $1"; return 2 ;;
+      *)        if [[ -z "$profile" ]]; then profile="$1"; else vi_warn "ignoring extra arg: $1"; fi; shift ;;
+    esac
+  done
+
   if [[ -z "$profile" ]]; then
-    vi_err "usage: vps-init apply <profile>"
+    vi_err "usage: vps-init apply <profile> [--only a,b,c] [--skip x,y]"
+    return 2
+  fi
+
+  if [[ -n "$only_csv" && -n "$skip_csv" ]]; then
+    vi_err "--only and --skip are mutually exclusive"
     return 2
   fi
 
@@ -56,6 +75,8 @@ vi_cmd_apply() {
   local desc
   desc=$(grep -m1 '^description:' "$path" | sed 's/^description:[[:space:]]*//' | sed 's/^"\|"$//g')
   [[ -n "$desc" ]] && vi_info "$desc"
+  [[ -n "$only_csv" ]] && vi_info "only:  $only_csv"
+  [[ -n "$skip_csv" ]] && vi_info "skip:  $skip_csv"
 
   # Parse module entries. Each `- <name>:` at the top of `modules:` starts a
   # new step; nested 2-space keys are args. We gather them into newline-
@@ -89,15 +110,88 @@ vi_cmd_apply() {
     return 1
   fi
 
-  local record
-  while IFS= read -r record; do
-    local name="${record%%|*}"
-    local args=""
-    [[ "$record" == *"|"* ]] && args="${record#*|}"
-    _vi_run_module "$name" "$args"
+  # Resolve --only / --skip against the profile's module list. We pre-collect
+  # the modules listed and validate the filter values against them, so a typo
+  # like '--only swaap' fails loudly instead of silently running nothing.
+  local all_names=()
+  local rec
+  while IFS= read -r rec; do
+    [[ -z "$rec" ]] && continue
+    all_names+=("${rec%%|*}")
   done <<< "$records"
 
-  vi_ok "profile applied: $(basename "$path" .yaml)"
+  _vi_in_csv() {
+    local needle="$1" csv="$2"
+    [[ -z "$csv" ]] && return 1
+    local IFS=','
+    local item
+    for item in $csv; do
+      item="${item// /}"
+      [[ "$needle" == "$item" ]] && return 0
+    done
+    return 1
+  }
+
+  if [[ -n "$only_csv" ]]; then
+    local IFS=','
+    local item
+    for item in $only_csv; do
+      item="${item// /}"
+      [[ -z "$item" ]] && continue
+      local found=0
+      local n
+      for n in "${all_names[@]}"; do [[ "$n" == "$item" ]] && { found=1; break; }; done
+      if [[ $found -eq 0 ]]; then
+        vi_err "--only references module '$item' which is not in this profile"
+        vi_info "profile modules: ${all_names[*]}"
+        return 2
+      fi
+    done
+  fi
+
+  if [[ -n "$skip_csv" ]]; then
+    local IFS=','
+    local item
+    for item in $skip_csv; do
+      item="${item// /}"
+      [[ -z "$item" ]] && continue
+      local found=0
+      local n
+      for n in "${all_names[@]}"; do [[ "$n" == "$item" ]] && { found=1; break; }; done
+      if [[ $found -eq 0 ]]; then
+        vi_warn "--skip references module '$item' which is not in this profile (ignoring)"
+      fi
+    done
+  fi
+
+  local record name args
+  local ran=0 skipped=0
+  while IFS= read -r record; do
+    [[ -z "$record" ]] && continue
+    name="${record%%|*}"
+    args=""
+    [[ "$record" == *"|"* ]] && args="${record#*|}"
+
+    if [[ -n "$only_csv" ]] && ! _vi_in_csv "$name" "$only_csv"; then
+      vi_info "skip $name (not in --only)"
+      skipped=$((skipped+1))
+      continue
+    fi
+    if [[ -n "$skip_csv" ]] && _vi_in_csv "$name" "$skip_csv"; then
+      vi_info "skip $name (in --skip)"
+      skipped=$((skipped+1))
+      continue
+    fi
+
+    _vi_run_module "$name" "$args"
+    ran=$((ran+1))
+  done <<< "$records"
+
+  if [[ $ran -eq 0 ]]; then
+    vi_warn "no modules ran (filters matched nothing)"
+    return 1
+  fi
+  vi_ok "profile applied: $(basename "$path" .yaml) (ran $ran, skipped $skipped)"
 }
 
 # Invoke the right vi_cmd_<name> with args resolved from a key=value string.
