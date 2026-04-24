@@ -1,0 +1,63 @@
+name: Bug report
+description: A vps-init module did the wrong thing on a real server
+title: "bug: "
+labels: [bug]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened
+      description: What module or profile did you run, what did you expect, what did you get?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Exact command
+      description: Include `--dry-run` output first if the real run failed mid-way.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: output
+    attributes:
+      label: Full output
+      render: shell
+    validations:
+      required: true
+
+  - type: input
+    id: distro
+    attributes:
+      label: Distribution
+      description: Output of `lsb_release -a` or contents of `/etc/os-release`.
+      placeholder: "Ubuntu 24.04 / Debian 12"
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: vps-init version
+      placeholder: "run: vps-init version"
+    validations:
+      required: true
+
+  - type: textarea
+    id: doctor
+    attributes:
+      label: vps-init doctor (optional but very helpful)
+      description: Output of running `vps-init doctor` on the affected machine.
+      render: shell
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: This is on a supported distro (Ubuntu 22.04 / 24.04 or Debian 12)
+          required: true
+        - label: I re-ran with `--dry-run` to confirm what vps-init intended to do
+          required: true

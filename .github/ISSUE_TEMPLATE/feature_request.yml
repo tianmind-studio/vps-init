@@ -1,0 +1,40 @@
+name: Feature request
+description: Propose a new module, profile, or flag
+title: "feat: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: scenario
+    attributes:
+      label: What are you trying to bootstrap
+      description: Describe the actual server scenario this would help with.
+    validations:
+      required: true
+
+  - type: textarea
+    id: shape
+    attributes:
+      label: What would the command look like
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: idempotency
+    attributes:
+      label: How would the module stay idempotent
+      description: |
+        Every vps-init module must be safe to re-run. If you're proposing a new
+        one, describe how the second run would detect "already done" state and
+        become a no-op.
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      description: vps-init intentionally stays narrow — see CONTRIBUTING.md.
+      options:
+        - label: This stays within Ubuntu/Debian support (no CentOS/RHEL/Arch generalization)
+          required: true
+        - label: This does not introduce a persistent daemon, agent, or config-mgmt framework
+          required: true
