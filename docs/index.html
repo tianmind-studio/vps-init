@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>vps-init · 一键初始化 Ubuntu/Debian VPS · 中国场景优化</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="一条命令把全新 Ubuntu / Debian VPS 初始化为生产环境 · 为中国大陆 / 香港 VPS 做针对性调优">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d1411;
+  --bg-card: #162220;
+  --bg-code: #0a120f;
+  --border: #1f2f2b;
+  --border-bright: #2d4743;
+  --fg: #e4ede8;
+  --fg-dim: #92a8a0;
+  --accent: #86efac;
+  --accent-bright: #bbf7d0;
+  --warn: #fcd34d;
+  --orange: #fb923c;
+  --blue: #60a5fa;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font: 400 16px/1.6 "Inter", system-ui, -apple-system, "PingFang SC", sans-serif;
+  background: var(--bg); color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+}
+.mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+
+.nav {
+  position: sticky; top: 0; z-index: 10;
+  background: rgba(13,20,17,0.78);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 0;
+}
+.nav-inner {
+  max-width: 1040px; margin: 0 auto; padding: 0 1.5rem;
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+}
+.nav a.brand { font-weight: 700; color: var(--fg); text-decoration: none; }
+.nav a.brand .mono { color: var(--accent); }
+.nav-links { display: flex; gap: 1.5rem; font-size: 0.92rem; }
+.nav-links a { color: var(--fg-dim); text-decoration: none; transition: color 120ms; }
+.nav-links a:hover { color: var(--fg); }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 1.5rem; }
+
+.hero {
+  padding: 6rem 0 3rem; text-align: center;
+  background:
+    radial-gradient(circle at 20% 15%, rgba(134,239,172,0.07), transparent 50%),
+    radial-gradient(circle at 80% 40%, rgba(96,165,250,0.06), transparent 50%);
+}
+.tag {
+  display: inline-block;
+  padding: 0.35rem 0.85rem;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  background: rgba(134,239,172,0.08);
+  border: 1px solid rgba(134,239,172,0.3);
+  border-radius: 2rem;
+  margin-bottom: 1.5rem;
+}
+h1 {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  line-height: 1.1; margin: 0 0 1.5rem;
+  letter-spacing: -0.02em; font-weight: 700;
+}
+h1 .mono { color: var(--accent); }
+.hero p.lede {
+  font-size: 1.15rem; color: var(--fg-dim);
+  max-width: 680px; margin: 0 auto 2.5rem;
+}
+.cta {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.8rem 1.4rem; border-radius: 0.5rem;
+  background: var(--accent); color: #0a120f;
+  font-weight: 600; text-decoration: none;
+  transition: transform 120ms;
+}
+.cta:hover { transform: translateY(-1px); }
+.cta.outline { background: transparent; color: var(--fg); border: 1px solid var(--border-bright); }
+.cta-group { display: flex; justify-content: center; gap: 0.75rem; flex-wrap: wrap; }
+
+.terminal {
+  margin: 3rem auto 0; max-width: 780px;
+  background: var(--bg-code); border: 1px solid var(--border);
+  border-radius: 0.75rem; overflow: hidden; text-align: left;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+}
+.terminal-bar {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  background: #070d0b; border-bottom: 1px solid var(--border);
+}
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.dot.r { background: #ef4444; }
+.dot.y { background: #eab308; }
+.dot.g { background: #22c55e; }
+.terminal-title { margin-left: auto; font-size: 0.8rem; color: var(--fg-dim); }
+.terminal pre {
+  margin: 0; padding: 1.2rem 1.4rem;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.87rem; line-height: 1.7;
+  color: var(--fg); overflow-x: auto;
+}
+.terminal .cmt { color: var(--fg-dim); }
+.terminal .prompt { color: var(--accent); }
+.terminal .ok { color: var(--accent); }
+.terminal .warn { color: var(--warn); }
+.terminal .kw { color: var(--blue); }
+
+section { padding: 5rem 0; border-top: 1px solid var(--border); }
+section h2 { font-size: 2rem; margin: 0 0 0.75rem; letter-spacing: -0.01em; }
+section .subtitle { color: var(--fg-dim); margin: 0 0 2.5rem; font-size: 1.05rem; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+.card {
+  padding: 1.5rem;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 0.75rem; transition: border-color 160ms;
+}
+.card:hover { border-color: var(--border-bright); }
+.card h3 {
+  margin: 0 0 0.5rem; font-size: 1.1rem; font-weight: 600;
+  display: flex; align-items: center; gap: 0.6rem;
+}
+.card h3 .badge {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.72rem; padding: 0.15rem 0.5rem;
+  background: rgba(134,239,172,0.1);
+  color: var(--accent); border-radius: 0.35rem;
+  letter-spacing: 0.03em;
+}
+.card p { margin: 0; color: var(--fg-dim); font-size: 0.95rem; }
+
+.profiles {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+.profile {
+  padding: 1.25rem 1.5rem;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  display: flex; flex-direction: column; gap: 0.65rem;
+}
+.profile h3 {
+  margin: 0; font-family: "JetBrains Mono", monospace;
+  color: var(--accent); font-size: 1.05rem;
+}
+.profile p { margin: 0; color: var(--fg-dim); font-size: 0.92rem; line-height: 1.55; }
+.profile ul {
+  margin: 0; padding-left: 1.1rem;
+  color: var(--fg-dim); font-size: 0.88rem;
+}
+
+footer {
+  padding: 3rem 0; text-align: center;
+  color: var(--fg-dim); font-size: 0.88rem;
+  border-top: 1px solid var(--border);
+}
+footer a { color: var(--fg-dim); }
+
+@media (max-width: 640px) {
+  .hero { padding: 3.5rem 0 2rem; }
+  section { padding: 3rem 0; }
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#"><span class="mono">#</span> vps-init</a>
+    <div class="nav-links">
+      <a href="#profiles">Profile</a>
+      <a href="#cn-tuning">中国场景</a>
+      <a href="https://github.com/491034170/vps-init" target="_blank" rel="noopener">GitHub →</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero wrap">
+  <div class="tag">v0.1.1 · MIT · Ubuntu 22/24 · Debian 12</div>
+  <h1>一条命令<br>把新 VPS 变成<span class="mono">生产环境</span>。</h1>
+  <p class="lede">
+    为中国大陆 / 香港 VPS 做过实际踩出来的调优。4 种 profile，<br>
+    10+ 幂等模块，SSH 加固带防锁死保护。
+  </p>
+  <div class="cta-group">
+    <a class="cta" href="https://github.com/491034170/vps-init#30-秒上线--30-second-onboarding">30 秒上线</a>
+    <a class="cta outline" href="https://github.com/491034170/vps-init" target="_blank" rel="noopener">GitHub</a>
+  </div>
+
+  <div class="terminal">
+    <div class="terminal-bar">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="terminal-title">root@vps — apply web-cn</span>
+    </div>
+<pre><span class="prompt">#</span> <span>vps-init apply web-cn</span>
+==&gt; Timezone
+    already Asia/Shanghai
+==&gt; Switching apt sources to aliyun
+    distro: ubuntu noble
+==&gt; Base packages
+    apt install: nginx certbot python3-certbot-nginx ...
+==&gt; Swap file
+    <span class="ok">✓ swap ready: /swapfile (2048 MB)</span>
+==&gt; UFW firewall
+    <span class="ok">✓ firewall active (ssh:22, 80, 443 open)</span>
+==&gt; fail2ban
+    <span class="ok">✓ fail2ban active with sshd jail</span>
+==&gt; SSH hardening
+    found keys for user: root
+    <span class="ok">✓ sshd hardened</span>
+
+<span class="ok">✓ profile applied: web-cn</span></pre>
+  </div>
+</header>
+
+<section class="wrap" id="profiles">
+  <h2>4 种内置 profile</h2>
+  <p class="subtitle">看哪个场景贴就跑哪个。任何一个都能 <span class="mono">--dry-run</span> 先预览。</p>
+
+  <div class="profiles">
+    <div class="profile">
+      <h3>minimal</h3>
+      <p>最小化 bootstrap。不动防火墙、不改 SSH。</p>
+      <ul>
+        <li>Asia/Shanghai 时区</li>
+        <li>阿里云镜像</li>
+        <li>基础工具（不装 nginx）</li>
+        <li>2G swap + swappiness=10</li>
+      </ul>
+    </div>
+    <div class="profile">
+      <h3>web-cn</h3>
+      <p>最常用。完整 web VPS，配 site-bootstrap 刚好。</p>
+      <ul>
+        <li>minimal 的全部</li>
+        <li>nginx + certbot</li>
+        <li>UFW + fail2ban（增强 bantime）</li>
+        <li>SSH key-only 加固</li>
+      </ul>
+    </div>
+    <div class="profile">
+      <h3>node-app</h3>
+      <p>web-cn 再叠一层 Node.js 工具链。</p>
+      <ul>
+        <li>web-cn 的全部</li>
+        <li>nvm 装 Node LTS</li>
+        <li>pnpm + pm2 全局</li>
+        <li>适合 Next.js / Express</li>
+      </ul>
+    </div>
+    <div class="profile">
+      <h3>docker-host</h3>
+      <p>Docker 宿主机。不装 nginx，走容器路线。</p>
+      <ul>
+        <li>Asia/Shanghai + 阿里云镜像</li>
+        <li>Docker CE + buildx + compose</li>
+        <li>UFW + fail2ban</li>
+        <li>SSH 加固</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="cn-tuning">
+  <h2>中国场景做了哪些特别调优</h2>
+  <p class="subtitle">欧美开源项目不会告诉你的那些细节。</p>
+
+  <div class="grid">
+    <div class="card">
+      <h3>apt 源双格式 <span class="badge">兼容</span></h3>
+      <p>Ubuntu 24.04 deb822 <code class="mono">ubuntu.sources</code> + 旧版 <code class="mono">sources.list</code> 自动识别。</p>
+    </div>
+    <div class="card">
+      <h3>多镜像可选 <span class="badge">速度</span></h3>
+      <p>aliyun / 清华 / 中科大 / 网易 / 华为云。默认阿里云（延迟最稳）。</p>
+    </div>
+    <div class="card">
+      <h3>fail2ban 升级 <span class="badge">真实</span></h3>
+      <p><code class="mono">bantime.increment=true</code>。CN/HK VPS 被扫量级比欧美高一个数量级，10 分钟 bantime 根本不够。</p>
+    </div>
+    <div class="card">
+      <h3>小内存 swap <span class="badge">玄学</span></h3>
+      <p><code class="mono">vm.swappiness=10</code>。1G VPS 用默认 60 会疯狂换页，体感明显。</p>
+    </div>
+    <div class="card">
+      <h3>Docker 走官方源 <span class="badge">版本</span></h3>
+      <p>不从 <code class="mono">apt install docker.io</code> 装（版本落后 + 缺 buildx / compose plugin）。</p>
+    </div>
+    <div class="card">
+      <h3>SSH 防锁死 <span class="badge">安全</span></h3>
+      <p>如果所有用户都没 authorized_keys，拒绝关闭密码登录。把"我把自己锁在外面"这个经典坑堵死。</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>MIT © 2026 <a href="https://tianmind.com" target="_blank" rel="noopener">Tianmind Studio</a> · <a href="https://github.com/491034170/vps-init" target="_blank" rel="noopener">GitHub</a> · <a href="https://github.com/491034170/vps-init/releases" target="_blank" rel="noopener">Releases</a></p>
+  <p>配套 · <a href="https://491034170.github.io/site-bootstrap/" target="_blank" rel="noopener">site-bootstrap</a> 部站 · <a href="https://491034170.github.io/cloudflare-cn-kit/" target="_blank" rel="noopener">cloudflare-cn-kit</a> 运维 CF</p>
+</footer>
+
+</body>
+</html>
