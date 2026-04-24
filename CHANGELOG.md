@@ -1,18 +1,20 @@
 # Changelog
 
-## Unreleased
+## [0.1.1] — minor feature release
 
 ### Added
-- `user <name>` module — create an operator user with sudo access and
-  SSH keys in one command. Key sources: `--github <gh-login>` (fetches
-  from `github.com/<login>.keys`), `--key-file <path>`, or
-  `--copy-key-from <user>`. Sudoers is managed as a per-user file in
-  `/etc/sudoers.d/90-<name>` and validated with `visudo -cf` before
-  the drop-in is considered installed. `--sudo-nopasswd` available
-  when you really mean it.
+- `user <name>` module — create an operator user with sudo access and SSH
+  keys in one command. Key sources, in priority order:
+  `--key-file <path>`, `--copy-key-from <existing-user>`,
+  `--github <gh-login>` (fetches from `github.com/<login>.keys`).
+  Sudoers is managed as a per-user file in `/etc/sudoers.d/90-<name>`
+  validated with `visudo -cf` before the drop-in is committed.
+  `--sudo-nopasswd` available.
+- `install.sh` — `curl | sudo bash` installer matching `site-bootstrap`.
 
 ### Changed
 - `list` now includes the `user` module with its flags.
+- README roadmap now checks off the `user` item.
 
 ## [0.1.0] — initial public release
 
