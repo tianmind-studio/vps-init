@@ -29,6 +29,11 @@ vi_cmd_list() {
   firewall           UFW with SSH + 80/443
   fail2ban           tuned sshd jail
   ssh-hardening      key-only, no root password
+  user <name>        Create operator user + sudo + SSH keys
+                       --github <handle>   pull keys from github.com/<handle>.keys
+                       --key-file <path>   read public key(s) from a file
+                       --copy-key-from <u> inherit keys from an existing user (e.g. root)
+                       --sudo-nopasswd     skip password prompt for sudo
   node [lts|20|18]   via nvm + pnpm + pm2
   docker             Docker CE from upstream repo
   doctor             summary of current state

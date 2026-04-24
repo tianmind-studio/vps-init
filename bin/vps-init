@@ -38,6 +38,9 @@ Commands:
   firewall                     Enable UFW with web + ssh default policy.
   fail2ban                     Install & enable fail2ban with sane ssh jail.
   ssh-hardening                Disable root password login; enforce key-only.
+  user <name> [flags]          Create operator user with sudo + SSH keys.
+                               Flags: --github <gh-login>, --key-file <path>,
+                                      --copy-key-from <user>, --sudo-nopasswd.
   node [lts|20|18]             Install Node via nvm + pnpm + pm2.
   docker                       Install Docker CE from the official repo.
   list                         List built-in profiles and modules.
@@ -133,6 +136,12 @@ case "$cmd" in
     # shellcheck source=lib/ssh.sh
     source "$VI_LIB/ssh.sh"
     vi_cmd_ssh "$@"
+    ;;
+  user)
+    require_root
+    # shellcheck source=lib/user.sh
+    source "$VI_LIB/user.sh"
+    vi_cmd_user "$@"
     ;;
   node)
     # Node install is user-scope (nvm), no root strictly required.
